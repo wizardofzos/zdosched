@@ -1,0 +1,83 @@
+//ZDO##PLI JOB 'AC',
+//             'ASMJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//   JCLLIB ORDER=(ZDO.SCHED.SRCE)
+//*--
+//STEP01  EXEC COMP,
+//             REGION=0M,
+//             LOAD=ZDOSCHED ,
+//PLI.SYSIN   DD *
+*process margins(2,72),test(all,sym),OFFSET,STMT,SOURCE,LIST;
+ ZDOSCHED:                                                              1
+  proc(parm) options(main) reorder;
+
+
+  %include privlib(commarea);
+
+
+  dcl
+      parm         char(100) var,
+      delaysec     fixed bin(31) init(5),
+      null         builtin,
+      eofjcl       bit(1) init('0'b),
+      time         builtin,
+      ZDOCOMM      entry ( pointer byvalue );
+
+  on error
+  begin;
+    on error system;
+    display( 'ZDOSCHED-011E Error TEST' );
+  end;
+
+  allocate zca;
+  allocate mdfy;
+
+  dcl jclin file record input;
+  dcl subber file record output;
+
+  open file(sysprint) title('SYSPRINT');
+  open file(jclin) title('JOB');
+  open file(subber) title('SUBBER');
+  on endfile(jclin) begin;
+    eofjcl = '1'b;
+  end;
+
+  dcl jclline char(80);
+
+  /* get delay from parm */
+  delaysec = parm;    /* TODO : CHECK PARM */
+
+
+
+  attach ZDOCOMM( ptr_zca ) thread( Tzdocomm );
+
+
+  start:
+    /* DO WE NEED TO STOP? */
+    if zcaaction = 'STOP' then do;
+      detach thread(Tzdocomm);
+      return;
+    end;
+    if zcaaction = "CONT" then do;
+      read file(jclin) into (jclline);
+      do while(^eofjcl);
+        write file(subber) from(jclline);
+        read file(jclin) into (jclline);
+      end;
+      close file(jclin);
+      close file(subber);
+      open file(jclin) title('JOB');
+      open file(subber) title('SUBBER');
+      eofjcl = '0'b;
+      zcacount = zcacount + 1;
+    end;
+  delay(delaysec * 1000);
+
+  goto start;
+
+ end ZDOSCHED;
+//*KED.SYSIN DD *
+//*TRY ZDOSCHED

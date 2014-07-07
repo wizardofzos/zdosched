@@ -1,0 +1,17 @@
+ /*----------------------------------------------------------- */
+ /* ZCA: ZDO Communications Area                               */
+ /*----------------------------------------------------------- */
+ dcl ptr_zca         ptr;
+ dcl 1 zca           based(ptr_zca),
+      2 zcaid        char(4) init('ZCA'),
+      2 zcaaction    char(4) init('CONT'),
+      2 zcacount     fixed bin(31) init(0),
+      2 zcaptr_mdfy  ptr init(null);    /* mdfy Area           */
+
+ /*----------------------------------------------------------- */
+ /* MDFY Communications Area                                   */
+ /*----------------------------------------------------------- */
+ dcl 1 mdfy          based(zcaptr_mdfy),
+      2 mdfy_reply   char(72) var,      /* Current reply       */
+      2 mdfy_vreply  char(72) var;      /* Vorig reply         */
+

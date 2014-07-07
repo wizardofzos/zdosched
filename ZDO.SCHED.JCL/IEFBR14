@@ -1,0 +1,8 @@
+//ZDO##TST JOB 'AC',                                                    JOB03747
+//             'TSTJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//*--
+//STEPA   EXEC PGM=IEFBR14

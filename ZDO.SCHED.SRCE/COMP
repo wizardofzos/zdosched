@@ -1,0 +1,38 @@
+//COMPILE PROC LNGPRFX='IEL390',
+//             LIBPRFX='CEE',
+//             LOAD=XXXXXXXX
+//*
+//* Compile step
+//*
+//PLI     EXEC PGM=IBMZPLI,
+//             PARM='OBJECT,OPTIONS',
+//             REGION=32M
+//*
+//STEPLIB  DD  DSN=&LNGPRFX..SIBMZCMP,DISP=SHR
+//         DD  DSN=&LIBPRFX..SCEERUN,DISP=SHR
+//SYSPRINT DD  SYSOUT=*
+//SYSOUT   DD  SYSOUT=*
+//PRIVLIB  DD  DSN=ZDO.SCHED.SRCE,DISP=SHR
+//         DD  DSN=TCPIP.SEZANMAC,DISP=SHR
+//SYSLIN   DD  DSN=&&LOADSET,DISP=(MOD,PASS),UNIT=SYSALLDA,
+//             SPACE=(CYL,(1,1)),DCB=(LRECL=80,BLKSIZE=3200)
+//SYSUT1   DD  DSN=&&SYSUT1,UNIT=SYSALLDA,
+//             SPACE=(1024,(200,50),,CONTIG,ROUND),DCB=BLKSIZE=1024
+//*********************************************************************
+//* LINK-EDIT STEP
+//*********************************************************************
+//LKED    EXEC PGM=IEWL,
+//             COND=(8,LT,PLI),
+//             PARM='AMODE=31,RMODE=24,MAP,LIST(ALL),LET,XREF'
+//*            PARM='AMODE=31,RMODE=24,MAP,LIST(ALL),LET,XREF,REUS'
+//*            PARM='AMODE=31,RMODE=ANY,MAP,LIST(ALL),LET,XREF,REUS'
+//*
+//SYSLIB   DD  DSN=&LIBPRFX..SCEELKED,DISP=SHR
+//         DD  DSN=ZDO.SCHED.LOAD,DISP=SHR
+//SYSPRINT DD  SYSOUT=*
+//SYSLIN   DD  DSN=*.PLI.SYSLIN,DISP=(OLD,DELETE)
+//         DD  DDNAME=SYSIN
+//SYSLMOD  DD  DSN=ZDO.SCHED.LOAD(&LOAD),DISP=SHR
+//SYSUT1   DD  DSN=&&SYSUT1,UNIT=SYSALLDA,SPACE=(1024,(200,20)),
+//             DCB=BLKSIZE=1024
+//SYSIN    DD  DUMMY

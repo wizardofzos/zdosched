@@ -1,0 +1,38 @@
+         MACRO                                                          00000100
+&LABEL   EQUATE &NAME                                                   00000200
+.*             ZDEVOPS.ASSEMBLYSTUFF                                    00000301
+R0       EQU   0                                                        00000400
+R1       EQU   1                                                        00000500
+R2       EQU   2                                                        00000600
+R3       EQU   3                                                        00000700
+R4       EQU   4                                                        00000800
+R5       EQU   5                                                        00000900
+R6       EQU   6                                                        00001000
+R7       EQU   7                                                        00001100
+R8       EQU   8                                                        00001200
+R9       EQU   9                                                        00001300
+         AIF   ('&NAME' EQ 'RY').RY                                     00001400
+         AIF   ('&NAME' EQ 'DE').RY                                     00001500
+R10      EQU   10                                                       00001600
+R11      EQU   11                                                       00001700
+R12      EQU   12   BASE REGISTER                                       00001800
+R13      EQU   13   ADRES SAVEAREA                                      00001900
+R14      EQU   14   RETURN POINT                                        00002000
+R15      EQU   15   ENTRY  POINT                                        00002100
+         AIF   ('&NAME' EQ 'BATCH').BATCH                               00002200
+         MEXIT                                                          00002300
+.RY      ANOP                                                           00002400
+RA       EQU   10                                                       00002500
+RB       EQU   11                                                       00002600
+RC       EQU   12                                                       00002700
+RD       EQU   13                                                       00002800
+RE       EQU   14                                                       00002900
+RF       EQU   15                                                       00003000
+         MEXIT                                                          00003100
+.BATCH   ANOP                                                           00003200
+KEUZE    EQU   B'10000000'    VOORTGANG AFH. VAN 1E POS. JOBNAAM        00003300
+PRINTER  EQU   B'01000000'    MESSAGE NIET OP CONSOLE                   00003400
+HELP     EQU   B'00100000'    HELP INFORMATIE VERSTREKKEN               00003500
+ABEND    EQU   B'00010000'    ABEND U0500 NA MESSAGE                    00003600
+CONDITIE EQU   B'00000010'    RETURNKODE NAAR PL/1                      00003700
+         MEND                                                           00003800

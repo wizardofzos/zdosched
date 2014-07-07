@@ -1,0 +1,117 @@
+* PRIME  MACRO VOOR INITIALISERING ASSEMBLER SUBROUTINE
+         MACRO
+&LABEL   PRIME &SA=,&BR=12,&ID=*,&LV=,&DS=,&BRX=0,&MOD=NO
+         GBLA  &SIZE
+         GBLB  &SASW
+         LCLA  &BASE
+         LCLA  &BASX
+&SASW    SETB  0
+&NAM     SETC  'LAB'.'&SYSNDX'
+&NAM1    SETC  'LAB1'.'&SYSNDX'
+&LABEL   CSECT
+         USING *,15
+         AIF   ('&ID' EQ 'NO').SETNOID
+         SAVE  (14,12),,&ID
+         B     CATCH           BRANCH AROUND EYE CATCHER
+         DC    CL4'ZDO:'
+         DC    CL14'&SYSDATE:&SYSTIME'
+CATCH    EQU   *
+         AGO   .CONT2
+.SETNOID ANOP
+         SAVE  (14,12)
+.CONT2   ANOP
+         AIF   ('&SA' EQ '').DYNMC
+         AIF   ('&SA' NE 'PLI').CONT3
+&BASE    SETA  &BR
+         AIF   (&BASE NE 12).SBASE
+&BASE    SETA  10
+.SBASE   ANOP
+         BALR  &BASE,0        BASE REGISTER
+         DROP  15
+         USING *,&BASE        DON'T USE REGISTER 12
+LL_ARWMOD0 EQU X'000004E0'      ZIE ARWMOD0
+         AIF   (&BRX EQ 0).RBASE
+&BASX    SETA  &BRX
+         LA    &BASX,4004(&BASE)
+         USING *+4000,&BASX   SECONDARY BASE REGISTER
+.RBASE   AIF   ('&LV' EQ '').SBASF
+         AIF   (T'&LV EQ 'N').LV01  SELF DEFINING TERM ?
+.LV00    ANOP  ,
+         LA    0,((&LV+7)/8)*8 LENGTH OF REQUIRED DSA
+         AGO   .SBASG
+.LV01    ANOP  ,
+         AIF   (&LV LT 4096).LV00
+         LH    0,=H'&LV'      * DSA LENGTE AFRONDEN
+         AH    0,=H'7'        * OP DOUBLEWORD
+         SRL   0,3            * NAAR BOVEN
+         SLL   0,3
+         AGO   .SBASG
+.SBASF   ANOP
+         LA    0,80           LENGTH OF REQUIRED DSA
+         AGO   .SBASG
+.SBASG   ANOP
+         L     1,76(0,13)     NEXT AVAILABLE BYTE
+         ALR   0,1
+         CL    0,12(0,12)     STILL ENOUGH STORAGE ?
+         BNH   *+10           YES ->
+         L     15,116(0,12)
+         BALR  14,15          CALL PL/I STORAGE OVERFLOW
+         ST    0,76(0,1)      NEXT AVAILABLE BYTE
+         ST    13,4(0,1)      CHAIN BACK ADDRESS
+         MVC   72(4,1),72(13) ADDRESS OF LIBRARY WORKSPACE
+         LR    15,13          SAVE ADDRESS HIGHER SAVEAREA
+         LR    13,1           NEW DSA
+         MVI   0(13),X'00'    PREVENT PL/I ERR HANDLING
+         USING &DS,13        EERSTE
+         AIF   ('&MOD' EQ 'NO').MODNO
+         ST    R15,12(0,R13)  VEILIGSTELLEN R15
+         B     QUER
+MODNAAM  DC    C'ARWCL0  '
+QUER     CSVQUERY INEPNAME=MODNAAM,OUTEPA=CSVA,MF=(E,ACCSVQRY)
+         LTR   R15,R15
+         BZ    &NAM
+         ABEND 998,DUMP
+&NAM     EQU   *
+         L     R15,CSVA
+         S     R15,=A(LL_ARWMOD0) BEGIN ARWWMOD0
+         L     R15,0(R15) LAAD ADRES ARWBB
+         ST    R15,AARWBB STORE ADRES VAN ARWBB
+         LTR   R15,R15    ADRES WAARDE 0 ?
+         BNZ   &NAM1
+         ABEND 999,DUMP
+&NAM1    EQU   *
+         L     R15,12(0,R13)  TERUGZETTEN R15
+.MODNO   ANOP
+         LM    14,1,12(15)    RESTORE LINKAGE REGISTERS
+         AIF   ('&DS' EQ '').CONT2A
+*        USING &DS,13
+.CONT2A  ANOP
+         MEXIT
+.CONT3   ANOP
+         LA    &BR,&SA
+         ST    &BR,8(13)
+         ST    13,4(&BR)
+         LR    13,&BR
+         AGO   .END
+.DYNMC   ANOP
+&SASW    SETB  1
+         AIF   ('&LV' EQ '').DYNMD
+&SIZE    SETA  &LV
+         AGO   .DYNME
+.DYNMD   ANOP
+&SIZE    SETA  72
+.DYNME   ANOP
+         LR    &BR,1
+         GETMAIN R,LV=&SIZE
+         ST    1,8(13)
+         ST    13,4(1)
+         LR    13,1
+         LR    1,&BR
+.END     ANOP
+         DROP  15            TER VOORKOMING VAN MESSAGE ASMA303W
+         BALR  &BR,0
+         USING *,&BR
+         AIF   ('&DS' EQ '').ENDA
+         USING &DS,13
+.ENDA    ANOP
+         MEND

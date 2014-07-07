@@ -1,0 +1,17 @@
+//ZDO##PLI JOB 'AC',
+//             'ASMJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//   JCLLIB ORDER=(ZDO.SCHED.SRCE)
+//*--
+//STEP01  EXEC COMP,
+//             REGION=0M,
+//             LOAD=ZDONULL  ,
+//PLI.SYSIN   DD *
+*process margins(2,72),OFFSET,STMT,SOURCE,LIST;
+ ZDONULL:                                                               1
+  proc options(main);
+  put list('AAAAA');
+ end ZDONULL;

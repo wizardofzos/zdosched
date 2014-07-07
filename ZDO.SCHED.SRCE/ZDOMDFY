@@ -1,0 +1,125 @@
+//ZDO##ASM JOB 'AC',
+//             'ASMJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//   JCLLIB ORDER=(ZDO.SCHED.JCL)
+//*--
+//STEPA   EXEC ASMPROC,MBR=ZDOMDFY
+//ASM.SYSIN   DD *
+* ZDOMDFY PL1 INTERFACE - MODIFY TASK PROCESSOR
+*
+* PARAMETERS :
+*   R1 = ADRES PARAMETERLIST
+*        +-----------------------------+
+*        | X'80',AL3(MODIFY DATA AREA) |
+*        +-----------------------------+
+*                 ||
+*                 VV
+*        +----------------+
+*        | RETURNCODE-VELD|  HALFWORD
+*        +----------------+
+*        +---+-----------------------//------+
+*        | LL|COMMAND AREA STRING            |
+*        +---+-----------------------//------+
+*        MODIFY DATA AREA - CHAR(XX) VAR   XX - MAXIMAAL 100 BYTES
+*
+* ATTRIBUTES :
+*   SERIALLY REUSABLE
+*
+* RETURNKODE :
+*   R15 - 00 = EINDE MODIFY TASK, NIETS BIJZONDERS
+*         01 = STOP COMMAND
+*         02 = MODIFY COMMAND
+*
+* AANROEP VANUIT PL/1 :
+*   DCL ZDOMDFY ENTRY ( POINTER BYVALUE ) OPTIONS(ASM INTER),
+*   DCL 1 AREA,
+*        2 RC         FIXED BIN(15),
+*        2 MDFY_AREA    CHAR(100) VAR;
+*
+*   ATTACH ZDOMDFY( ADDR(RC) ) THREAD( TZDOMDFY );
+*   WAIT THREAD( TZDOMDFY );
+*
+*   RC = 0  ; GEEN COMMAND
+*   RC = 1  ; STOP COMMAND
+*   RC = 2  ; COMMAND IN MODIFY AREA
+*
+* -----------------------------------------------------------------
+ZDOMDFY  AMODE 31
+ZDOMDFY  RMODE 24
+ZDOMDFY  PRIME LV=1024,DS=RTDSECT
+         L     R1,0(0,R1)             A(MODIFY AREA)
+         LA    R1,0(0,R1)             CLEAR HIGH ORDER
+         ST    R1,RTMDFYA             SAVE ADRES
+*--
+*        MODIFY COMMAND VERWERKING MOGELIJK MAKEN
+*--
+         EXTRACT RTCOMM,'S',FIELDS=(COMM),MF=(E,RTEXTRAC)
+         L     R2,RTCOMM              A(MODIFY COMM AREA)
+         USING COMLIST,R2
+*--
+*        VRIJGEVEN START CIB INDIEN AANWEZIG
+*--
+         L     R3,COMCIBPT            A(CIB)
+         USING CIBNEXT,R3
+         CLI   CIBVERB,CIBSTART       START CIB AANWEZIG ?
+         BNE   RT010010               NEE ==>
+         QEDIT ORIGIN=COMCIBPT,BLOCK=(R3) VRIJGEVEN CIB
+RT010010 EQU   *
+         QEDIT ORIGIN=COMCIBPT,CIBCTR=1 START MODIFY TASK
+         L     R1,COMECBPT          A(MODIFY ECB)
+         WAIT  ECB=(R1)             WAIT FOR MODIFY COMMAND
+*--
+*        MODIFY COMMAND AFHANDELEN
+*--
+         L     R3,COMCIBPT          A(CIB)
+         USING CIBNEXT,R3
+         MVC   RTVERB,CIBVERB       SAVE CIBVERB
+*--
+*        COPY CIBDATA
+*--
+         LH    R4,CIBDATLN          LENGTE CIBDATA
+         LTR   R4,R4                LENGTE 0 ?
+         BZ    RT010030             JA ==>
+         L     R5,RTMDFYA           A(MODIFY AREA)
+         STH   R4,2(0,R5)           STORE LENGTE (LL) VAN AREA
+         BCTR  R4,0
+         EX    R4,RTMVC1            MVC   0(0,R5),CIBDATA
+RT010030 EQU   *
+         QEDIT ORIGIN=COMCIBPT,BLOCK=(R3) VRIJGEVEN CIB
+         MVC   RTRC,=H'1'
+         CLI   RTVERB,CIBSTOP       STOP COMMAND ?
+         BE    RTRETURN             JA ==>
+         MVC   RTRC,=H'2'
+         CLI   RTVERB,CIBMODFY      MODIFY COMMAND ?
+         BE    RTRETURN             JA ==>
+         XC    RTRC,RTRC
+*--
+RTRETURN LH    R15,RTRC             RETURNKODE
+         L     R5,RTMDFYA           A(MODIFY AREA)
+         STH   R15,0(0,R5)          STORE RC
+         TERME
+*--
+         EQUATE
+         LTORG
+RTMVC1   MVC   4(0,R5),CIBDATA
+*--
+RTDSECT  DSECT
+RTSAVE   DS    36F             SAVEAREA
+RTCOMM   DS    D
+RTR1     DS    A               A(PARMLIST)
+RTRC     DS    H               RETURNKODE
+RTVERB   DS    X               MODIFY COMMAND VERB
+RTMDFYA  DS    F               A(MODIFY AREA)
+RTEXTRAC EXTRACT FIELDS=(COMM),MF=L
+RTLDSECT EQU   *-RTDSECT
+*--
+         PRINT GEN
+         EJECT
+         DSECT
+         IEZCOM           COMMUNICATIONS AREA
+         DSECT
+         IEZCIB           CIB
+         END   ZDOMDFY

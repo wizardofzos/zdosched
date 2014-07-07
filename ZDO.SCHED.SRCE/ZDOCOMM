@@ -1,0 +1,69 @@
+//ZDO##PLI JOB 'AC',
+//             'ASMJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//   JCLLIB ORDER=(ZDO.SCHED.SRCE)
+//*--
+//STEP01  EXEC COMP,
+//             REGION=0M,
+//             LOAD=ZDOCOMM  ,
+//PLI.SYSIN   DD *
+*process margins(2,72),test(all,sym);
+ ZDOCOMM:                                                               1
+  proc(ptr_byvalue) reorder;
+  dcl ptr_byvalue pointer byvalue;
+
+
+  %include privlib(commarea);
+
+  dcl
+      null         builtin,
+      time         builtin,
+      ZDOMDFY      entry ( pointer byvalue );
+
+
+  on error
+  begin;
+    on error system;
+    display( 'ZDOCOMM-011E Error communication task' );
+  end;
+
+
+ dcl 1 modifystr,
+      2 mdfy_rc   fixed bin(15),
+      2 mdfy_area char(100) var;
+
+ ptr_zca = ptr_byvalue;
+
+ begin:
+  mdfy_area      = '';
+  attach ZDOMDFY( addr(mdfy_rc) ) thread( TZDOMDFY );
+  wait thread( TZDOMDFY );
+  detach thread( TZDOMDFY );
+
+  select( mdfy_rc );
+    when( 0 )    mdfy_reply = 'D S';
+    when( 1 )    mdfy_reply = 'STOP';
+    other        mdfy_reply = mdfy_area;
+  end;
+  if mdfy_reply = 'STOP' then do;
+    zcaaction = 'STOP';
+    goto einde;
+  end;
+  if mdfy_reply = 'STAT' then do;
+    if zcaaction = 'HOLD' then
+      display('ZDOSCHED : Execution held');
+    else
+      display('ZDOSCHED : Job Submission active');
+    display('ZDOSCHED : ' || zcacount || ' submits');
+  end;
+  if mdfy_reply = 'HOLD' then zcaaction = 'HOLD';
+  if mdfy_reply = 'CONT' then zcaaction = 'CONT';
+ goto begin;
+
+ einde:
+ end ZDOCOMM;
+//LKED.SYSIN DD *
+ ENTRY ZDOCOMM

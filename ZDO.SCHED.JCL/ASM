@@ -1,0 +1,9 @@
+//ZDO##TST JOB 'AC',
+//             'TSTJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//*--
+//STEPA   EXEC PGM=ZDOTST
+//STEPLIB   DD DSN=ZDO.SCHED.LOAD,DISP=SHR

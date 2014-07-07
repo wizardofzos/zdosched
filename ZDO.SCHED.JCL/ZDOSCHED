@@ -1,0 +1,15 @@
+//ZDOSCHED JOB 'AC',                                                    JOB03747
+//             'TSTJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//*--
+//STEPA   EXEC PGM=ZDOSCHED,
+//             PARM='POSIX(ON)/10'
+//STEPLIB   DD DSN=ZDO.SCHED.LOAD,DISP=SHR
+//JOB       DD DSN=ZDO.SCHED.JCL(IEFBR14),DISP=SHR
+//SUBBER    DD SYSOUT=(B,INTRDR)
+//SYSPRINT  DD SYSOUT=*
+//SYSMDUMP  DD SYSOUT=*
+//SYSUDUMP  DD SYSOUT=*

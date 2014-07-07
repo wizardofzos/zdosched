@@ -1,0 +1,36 @@
+//* -                                                                   00001000
+//* AANROEP : //STEP01 EXEC ASSEM,MBR=MODULENAAM....                    00001100
+//*                                                                     00001500
+//* SRCE TOEVOEGEN ACHTER:                                              00001600
+//* //ASM.SYSIN                                                         00001700
+//*                                                                     00001800
+//* LINKEDIT STATEMENTS TOEVOEGEN:                                      00001900
+//* //LKED.SYSIN DD *                                                   00002000
+//*                                                                     00002100
+//* -                                                                   00003000
+//ASSEM   PROC MBR=XXXXXXXX                                             00004000
+//ASM     EXEC PGM=ASMA90,                                              00008000
+//*            PARM='ADATA,LINECOUNT(65),OBJECT,NODECK'                 00008100
+//             PARM='LINECOUNT(65),OBJECT,NODECK'                       00008200
+//SYSIN     DD DUMMY                                                    00008300
+//SYSLIB    DD DSN=SYS1.MACLIB,DISP=SHR                                 00009100
+//          DD DSN=SYS1.MODGEN,DISP=SHR                                 00009200
+//          DD DSN=ZDO.SCHED.SRCE,DISP=SHR                              00009400
+//SYSUT1    DD DSN=&&ASM,SPACE=(CYL,(5,5)),UNIT=SYSDA                   00010001
+//SYSPRINT  DD SYSOUT=*                                                 00012000
+//SYSADATA  DD SYSOUT=*                                                 00012100
+//SYSLIN    DD DSN=&&OBJ,                                               00013000
+//             SPACE=(CYL,(5,5)),                                       00013100
+//             UNIT=SYSDA,                                              00013202
+//             DISP=(MOD,PASS),                                         00014000
+//             DCB=(LRECL=80,RECFM=FBS)                                 00015000
+//LKED    EXEC PGM=HEWL,                                                00016000
+//   PARM='MAP,LET,LIST,XREF,LINECT(65),REUS,AMODE(31),RMODE(24)'       00016100
+//*  PARM='MAP,LET,LIST,XREF,LINECT(65),REUS'                           00016200
+//SYSLIN    DD DSN=&&OBJ,DISP=(OLD,DELETE)                              00017000
+//          DD DDNAME=SYSIN                                             00018000
+//SYSLIB    DD DSN=ZDO.SCHED.LOAD,DISP=SHR                              00018100
+//SYSLMOD   DD DSN=ZDO.SCHED.LOAD(&MBR),DISP=SHR                        00019000
+//SYSUT1    DD DSN=&&LKED,SPACE=(CYL,(5,5)),UNIT=SYSDA                  00021001
+//SYSPRINT  DD SYSOUT=*                                                 00022100
+//       PEND                                                           00023100

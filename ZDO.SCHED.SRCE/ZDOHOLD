@@ -1,0 +1,24 @@
+//ZDO##ASM JOB 'AC',
+//             'ASMJOB ',
+//             MSGCLASS=X,
+//             CLASS=A,
+//             NOTIFY=&SYSUID
+//*--
+//   JCLLIB ORDER=(ZDO.SCHED.JCL)
+//*--
+//STEPA   EXEC ASMPROC,MBR=ZDOHOLD
+//ASM.SYSIN   DD *
+ZDOHOLD  AMODE 31
+ZDOHOLD  RMODE 24
+ZDOHOLD  CSECT
+R2       EQU 2
+R12      EQU 12
+         USING *,R12
+         LA    R2,CMD
+         MGCRE MF=(E,LAREA),TEXT=(R2),CMDFLAG=(NOHCPY),CONSNAME=MYCON
+CMD      DS    0CL6
+CMDLEN   DC    XL2'4'
+CMDCOMM  DC    CL4'D C '
+MYCON    DC    CL8'CON4    '
+LAREA    MGCRE MF=L
+         END
